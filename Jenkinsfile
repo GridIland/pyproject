@@ -91,11 +91,6 @@ pipeline {
               pytest --cov=. --cov-report=xml --cov-report=html --junitxml=test-results.xml
             '''
           }
-          post {
-            always {
-              publishTestResults testResultsPattern: 'test-results.xml'
-              publishCoverage adapters: [coberturaAdapter('coverage.xml')], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
-            }
             failure {
               emailext body: "Unit tests failed in build ${env.BUILD_NUMBER}\n${env.BUILD_URL}",
                       subject: "FAILED: Tests - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
