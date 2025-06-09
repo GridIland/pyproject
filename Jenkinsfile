@@ -22,7 +22,6 @@ pipeline {
         sh '''
           # Installation de Python et des outils système
           apk add --no-cache python3 py3-pip python3-dev gcc musl-dev libffi-dev
-          python3 -m ensurepip
           
           # Création d'un lien symbolique pour python
           ln -sf python3 /usr/bin/python
