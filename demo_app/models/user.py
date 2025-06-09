@@ -18,6 +18,7 @@ class User:
             "id": self.id,
             "name": self.name,
             "email": self.email,
+            "age": self.age,
             "active": self.active,
         }
 
@@ -28,5 +29,6 @@ class User:
             id=data["id"],
             name=data["name"],
             email=data["email"],
+            age=data["age"],
             active=data.get("active", True),
         )
