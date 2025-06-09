@@ -1,23 +1,4 @@
-# Dépendances principales de l'application
-flask==2.3.3
-requests==2.31.0
-python-dotenv==1.0.0
-
-# Dépendances de développement et tests
-pytest==7.4.2
-pytest-cov==4.1.0
-pytest-mock==3.11.1
-
-# Outils de qualité de code
-flake8==6.1.0
-black==23.9.1
-isort==5.12.0
-mypy==1.5.1
-
-# Outils de sécurité
-safety==2.3.5
-bandit==1.7.5
-
-# Pour le packaging
-build==1.0.3
-wheel==0.41.2
+# Dépendances principales
+Flask~=2.3.3            # >=2.3.3,<2.4.0
+requests>=2.31.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0

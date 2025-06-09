@@ -6,26 +6,27 @@ from typing import Optional
 @dataclass
 class User:
     """Modèle utilisateur simple."""
+
     id: int
     name: str
     email: str
     active: bool = True
-    
+
     def to_dict(self):
         """Convertit en dictionnaire."""
         return {
-            'id': self.id,
-            'name': self.name,
-            'email': self.email,
-            'active': self.active
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "active": self.active,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict):
         """Crée un utilisateur depuis un dictionnaire."""
         return cls(
-            id=data['id'],
-            name=data['name'],
-            email=data['email'],
-            active=data.get('active', True)
+            id=data["id"],
+            name=data["name"],
+            email=data["email"],
+            active=data.get("active", True),
         )

@@ -1,0 +1,21 @@
+# On part des dépendances prod
+-r requirements.txt
+
+# Tests
+pytest>=7.4.2,<8.0.0
+pytest-cov>=4.1.0,<5.0.0
+pytest-mock>=3.11.1,<4.0.0
+
+# Qualité de code
+flake8>=6.1.0,<7.0.0
+black>=23.9.1,<24.0.0
+isort>=5.12.0,<6.0.0
+mypy>=1.5.1,<2.0.0
+
+# Sécurité (pipeline Jenkins)
+safety>=3.0.0,<4.0.0   # 3.x+ supprime la contrainte packaging<22
+bandit>=1.7.5,<2.0.0
+
+# Packaging
+build>=1.0.3,<2.0.0
+wheel>=0.41.2,<1.0.0

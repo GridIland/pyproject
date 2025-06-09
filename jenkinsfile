@@ -25,7 +25,7 @@ pipeline {
         checkout scm
         sh '''
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
         '''
       }
     }
@@ -43,7 +43,7 @@ pipeline {
             checkout scm
             sh '''
               python -m pip install --upgrade pip
-              pip install -r requirements.txt
+              pip install -r dev-requirements.txt
               pip install flake8 black isort mypy
             '''
             // Formatage du code
@@ -73,7 +73,7 @@ pipeline {
             checkout scm
             sh '''
               python -m pip install --upgrade pip
-              pip install -r requirements.txt
+              pip install -r dev-requirements.txt
               pip install pytest pytest-cov pytest-xvfb
             '''
             // Exécution des tests avec couverture
