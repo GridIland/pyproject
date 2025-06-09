@@ -1,8 +1,9 @@
 pipeline {
-  agent any
+  agent any  // Utilise votre agent Jenkins Alpine par défaut
+  
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
-    timeout(time: 15, unit: 'MINUTES')
+    timeout(time: 20, unit: 'MINUTES')  // Augmenté car installation des outils
     timestamps()
   }
 
@@ -14,46 +15,47 @@ pipeline {
   }
 
   stages {
-    // Étape 1: Préparation
-    stage('Checkout & Setup') {
-      agent {
-        dockerContainer {
-          image 'python:3.11-slim'
-        }
-      }
+    // Étape 1: Installation des outils
+    stage('Setup Environment') {
       steps {
         checkout scm
         sh '''
+          # Installation de Python et des outils système
+          apk add --no-cache python3 py3-pip python3-dev gcc musl-dev
+          
+          # Création d'un lien symbolique pour python
+          ln -sf python3 /usr/bin/python
+          
+          # Mise à jour de pip
           python -m pip install --upgrade pip
+          
+          # Installation des dépendances du projet
           pip install -r dev-requirements.txt
+          
+          # Installation des outils de qualité de code
+          pip install flake8 black isort mypy pytest pytest-cov pytest-xvfb safety bandit build wheel
         '''
       }
     }
 
-    // Étape 2: Qualité de code
+    // Étape 2: Qualité de code et tests
     stage('Quality & Test') {
       parallel {
         stage('Code Quality') {
-          agent {
-            dockerContainer {
-              image 'python:3.11-slim'
-            }
-          }
           steps {
-            checkout scm
             sh '''
-              python -m pip install --upgrade pip
-              pip install -r dev-requirements.txt
-              pip install flake8 black isort mypy
+              echo "🔍 Vérification du formatage avec Black..."
+              black --check . || echo "❌ Code formatting issues found"
+              
+              echo "🔍 Vérification des imports avec isort..."
+              isort --check-only . || echo "❌ Import sorting issues found"
+              
+              echo "🔍 Analyse avec flake8..."
+              flake8 . || echo "❌ Linting issues found"
+              
+              echo "🔍 Vérification des types avec mypy..."
+              mypy . || echo "❌ Type checking issues found"
             '''
-            // Formatage du code
-            sh 'black --check . || echo "Code formatting issues found"'
-            // Vérification des imports
-            sh 'isort --check-only . || echo "Import sorting issues found"'
-            // Linting avec flake8
-            sh 'flake8 . || echo "Linting issues found"'
-            // Vérification des types (optionnel)
-            sh 'mypy . || echo "Type checking issues found"'
           }
           post {
             failure {
@@ -63,21 +65,13 @@ pipeline {
             }
           }
         }
+        
         stage('Unit Tests') {
-          agent {
-            dockerContainer {
-              image 'python:3.11-slim'
-            }
-          }
           steps {
-            checkout scm
             sh '''
-              python -m pip install --upgrade pip
-              pip install -r dev-requirements.txt
-              pip install pytest pytest-cov pytest-xvfb
+              echo "🧪 Exécution des tests unitaires..."
+              pytest --cov=. --cov-report=xml --cov-report=html --junitxml=test-results.xml
             '''
-            // Exécution des tests avec couverture
-            sh 'pytest --cov=. --cov-report=xml --cov-report=html --junitxml=test-results.xml'
           }
           post {
             always {
@@ -97,55 +91,26 @@ pipeline {
     // Étape 3: Build et Package
     stage('Build & Package') {
       when { branch 'develop' }
-      agent {
-        dockerContainer {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        checkout scm
         sh '''
-          python -m pip install --upgrade pip
-          pip install build wheel
+          echo "📦 Construction du package Python..."
           python -m build
         '''
         archiveArtifacts artifacts: 'dist/*', fingerprint: true
       }
     }
 
-    // Étape 4: Build Docker Image
-    stage('Build Docker Image') {
-      when { branch 'develop' }
-      agent {
-        docker {
-          image 'docker:24-cli'
-          args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-      }
-      steps {
-        sh 'docker build -t ${APP_NAME}:${BRANCH_NAME}-${BUILD_NUMBER} .'
-        sh 'docker tag ${APP_NAME}:${BRANCH_NAME}-${BUILD_NUMBER} ${APP_NAME}:latest'
-      }
-    }
-
-    // Étape 5: Security Scan (optionnel)
+    // Étape 4: Security Scan
     stage('Security Scan') {
       when { branch 'develop' }
-      agent {
-        docker {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        checkout scm
         sh '''
-          python -m pip install --upgrade pip
-          pip install safety bandit
+          echo "🔒 Scan des vulnérabilités des dépendances..."
+          safety check || echo "❌ Security vulnerabilities found in dependencies"
+          
+          echo "🔒 Scan de sécurité du code..."
+          bandit -r . -f json -o bandit-report.json || echo "❌ Security issues found in code"
         '''
-        // Scan des dépendances
-        sh 'safety check || echo "Security vulnerabilities found in dependencies"'
-        // Scan du code
-        sh 'bandit -r . -f json -o bandit-report.json || echo "Security issues found in code"'
       }
       post {
         always {
@@ -154,35 +119,31 @@ pipeline {
       }
     }
 
-    // Étape 6: Déploiement Staging (simulé)
+    // Étape 5: Déploiement Staging (simulé)
     stage('Deploy to Staging') {
       when { branch 'develop' }
-      agent any
       steps {
         echo "🚀 Déploiement simulé sur staging"
-        echo "Image: ${APP_NAME}:${BRANCH_NAME}-${BUILD_NUMBER}"
         echo "Package: dist/*.whl"
       }
     }
 
-    // Étape 7: Validation manuelle
+    // Étape 6: Validation manuelle
     stage('Approbation Production') {
       when { branch 'develop' }
-      agent none
       steps {
         input message: "Déployer en production?", ok: "Confirmer"
       }
     }
 
-    // Étape 8: Déploiement Production (simulé)
+    // Étape 7: Déploiement Production (simulé)
     stage('Deploy to Production') {
       when { 
         anyOf { 
           branch 'main'
-          expression { return true } // Toujours exécuté après approbation
+          expression { return true }
         }
       }
-      agent any
       steps {
         echo "🚀 DÉPLOIEMENT PRODUCTION SIMULÉ"
         echo "Version: ${APP_NAME}:${BRANCH_NAME}-${BUILD_NUMBER}"
