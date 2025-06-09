@@ -18,7 +18,7 @@ pipeline {
     stage('Checkout & Setup') {
       agent {
         dockerContainer {
-          image 'icontain/jenkins-node-agent:latest'
+          image 'python:3.11-slim'
         }
       }
       steps {
@@ -36,7 +36,7 @@ pipeline {
         stage('Code Quality') {
           agent {
             dockerContainer {
-              image 'icontain/jenkins-node-agent:latest'
+              image 'python:3.11-slim'
             }
           }
           steps {
@@ -66,7 +66,7 @@ pipeline {
         stage('Unit Tests') {
           agent {
             dockerContainer {
-              image 'icontain/jenkins-node-agent:latest'
+              image 'python:3.11-slim'
             }
           }
           steps {
@@ -99,7 +99,7 @@ pipeline {
       when { branch 'develop' }
       agent {
         dockerContainer {
-          image 'icontain/jenkins-node-agent:latest'
+          image 'python:3.11-slim'
         }
       }
       steps {
