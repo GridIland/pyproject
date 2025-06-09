@@ -21,19 +21,31 @@ pipeline {
         checkout scm
         sh '''
           # Installation de Python et des outils système
-          apk add --no-cache python3 py3-pip python3-dev gcc musl-dev
+          apk add --no-cache python3 py3-pip python3-dev python3-venv gcc musl-dev
           
           # Création d'un lien symbolique pour python
           ln -sf python3 /usr/bin/python
           
-          # Mise à jour de pip
-          python -m pip install --upgrade pip
+          # Création de l'environnement virtuel
+          python -m venv venv
+          
+          # Activation de l'environnement virtuel et installation des packages
+          . venv/bin/activate
+          
+          # Mise à jour de pip dans le venv
+          pip install --upgrade pip
           
           # Installation des dépendances du projet
           pip install -r dev-requirements.txt
           
           # Installation des outils de qualité de code
           pip install flake8 black isort mypy pytest pytest-cov pytest-xvfb safety bandit build wheel
+          
+          # Vérification que tout est bien installé
+          echo "✅ Environnement virtuel créé et configuré"
+          which python
+          which pip
+          python --version
         '''
       }
     }
@@ -44,6 +56,9 @@ pipeline {
         stage('Code Quality') {
           steps {
             sh '''
+              # Activation de l'environnement virtuel
+              . venv/bin/activate
+              
               echo "🔍 Vérification du formatage avec Black..."
               black --check . || echo "❌ Code formatting issues found"
               
@@ -69,6 +84,9 @@ pipeline {
         stage('Unit Tests') {
           steps {
             sh '''
+              # Activation de l'environnement virtuel
+              . venv/bin/activate
+              
               echo "🧪 Exécution des tests unitaires..."
               pytest --cov=. --cov-report=xml --cov-report=html --junitxml=test-results.xml
             '''
@@ -93,6 +111,9 @@ pipeline {
       when { branch 'develop' }
       steps {
         sh '''
+          # Activation de l'environnement virtuel
+          . venv/bin/activate
+          
           echo "📦 Construction du package Python..."
           python -m build
         '''
@@ -105,6 +126,9 @@ pipeline {
       when { branch 'develop' }
       steps {
         sh '''
+          # Activation de l'environnement virtuel
+          . venv/bin/activate
+          
           echo "🔒 Scan des vulnérabilités des dépendances..."
           safety check || echo "❌ Security vulnerabilities found in dependencies"
           
