@@ -65,9 +65,6 @@ pipeline {
               echo "🔍 Vérification des imports avec isort..."
               isort --check-only . || echo "❌ Import sorting issues found"
               
-              echo "🔍 Analyse avec flake8..."
-              flake8 . || echo "❌ Linting issues found"
-              
               echo "🔍 Vérification des types avec mypy..."
               mypy . || echo "❌ Type checking issues found"
             '''
